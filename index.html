@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Find Your Seat | Chathura & Samadhi</title>
+
+    <!-- Open Graph Tags for WhatsApp / Facebook Sharing -->
+    <meta property="og:title" content="Find Your Seat | Chathura & Samadhi">
+    <meta property="og:description"
+        content="We can't wait to celebrate with you at The Lakeside! Enter your name to find your table and seat number for the reception.">
+    <!-- Elegant wedding reception image for the link preview -->
+    <meta property="og:image"
+        content="https://images.unsplash.com/photo-1519225421980-715cb02151ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80">
+    <meta property="og:type" content="website">
+
+    <!-- IMPORTANT: Replace this with your actual GitHub Pages URL -->
+    <meta property="og:url" content="https://yourusername.github.io/wedding-seating/">
+
+    <!-- Google Fonts matching the classic, elegant vibe of your invitation -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-text: #2b2b2b;
+            --accent-color: #8c734b;
+            /* Muted gold/bronze for elegance */
+            --bg-color: #fcfbf9;
+            /* Warm off-white */
+            --card-bg: #ffffff;
+            --border-color: #eaddcf;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#f0ebe1 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: var(--primary-text);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            margin: 30px auto;
+            background: var(--card-bg);
+            padding: 50px 30px;
+            border-radius: 4px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.04);
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        /* Decorative corner accents */
+        .container::before,
+        .container::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 1px solid var(--accent-color);
+            opacity: 0.5;
+        }
+
+        .container::before {
+            top: 15px;
+            left: 15px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .container::after {
+            bottom: 15px;
+            right: 15px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .monogram {
+            font-family: 'Great Vibes', cursive;
+            font-size: 36px;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-size: 28px;
+            margin: 10px 0;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--accent-color);
+            margin-bottom: 35px;
+        }
+
+        .instructions {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.6;
+            font-size: 14px;
+            font-weight: 300;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 25px;
+            z-index: 2;
+            /* Keeps it above decorative borders */
+        }
+
+        input {
+            width: 100%;
+            padding: 16px 20px;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 16px !important;
+            /* Prevents iOS zoom */
+            border: 1px solid #ddd;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            background-color: #faf9f7;
+            text-align: center;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(140, 115, 75, 0.1);
+            background-color: #fff;
+        }
+
+        input::placeholder {
+            color: #bbb;
+            font-style: italic;
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Result Card Styling */
+        .result-card {
+            padding: 30px 20px;
+            margin-top: 20px;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .result-card h3 {
+            font-family: 'Great Vibes', cursive;
+            font-size: 34px;
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: var(--primary-text);
+            font-weight: 400;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 15px 0;
+        }
+
+        .detail-box {
+            text-align: center;
+        }
+
+        .detail-label {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .detail-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        .divider {
+            width: 40px;
+            height: 1px;
+            background-color: var(--accent-color);
+            margin: 25px auto;
+            opacity: 0.5;
+        }
+
+        .not-found,
+        .loading {
+            display: none;
+            color: #888;
+            font-size: 13px;
+            margin-top: 20px;
+            padding: 15px;
+            font-style: italic;
+            font-family: 'Playfair Display', serif;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="monogram">C & S</div>
+        <h1>Chathura & Samadhi</h1>
+        <div class="subtitle">August 23, 2026 • The Lakeside</div>
+
+        <div class="divider"></div>
+
+        <!-- The text here will be overridden by the script below based on the date -->
+        <p class="instructions" id="dynamicWelcome">
+            With joyful hearts, we await your presence.<br>
+            Please enter your name below to find your seat.
+        </p>
+
+        <div class="input-group">
+            <input type="text" id="searchName" placeholder="Enter your first or last name..." oninput="findSeat()"
+                autocomplete="off">
+        </div>
+
+        <div id="loading" class="loading">Locating guest list...</div>
+
+        <div id="result" class="result-card">
+            <h3 id="guestNameDisplay"></h3>
+            <div class="detail-row">
+                <div class="detail-box">
+                    <div class="detail-label">Table</div>
+                    <div class="detail-value" id="tableDisplay"></div>
+                </div>
+                <div class="detail-box">
+                    <div class="detail-label">Seat</div>
+                    <div class="detail-value" id="seatDisplay"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="notFound" class="not-found">
+            We couldn't find a perfect match.<br>Try typing just your first name.
+        </div>
+    </div>
+
+    <script>
+        // --- Dynamic Welcome Text Logic ---
+        const welcomeElement = document.getElementById('dynamicWelcome');
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth() + 1; // getMonth is 0-indexed (Jan = 0)
+        const day = today.getDate();
+
+        // Check if today is exactly the wedding day (August 23, 2026)
+        if (year === 2026 && month === 8 && day === 23) {
+            welcomeElement.innerHTML = "Welcome to The Lakeside!<br>Please enter your name below to find your seat for the reception.";
+        }
+        // Check if today is BEFORE the wedding
+        else if (year < 2026 || (year === 2026 && month < 8) || (year === 2026 && month === 8 && day < 23)) {
+            welcomeElement.innerHTML = "With joyful hearts, we eagerly await your presence.<br>You can preview your reception seating below.";
+        }
+        // Check if today is AFTER the wedding
+        else {
+            welcomeElement.innerHTML = "Thank you for celebrating with us!<br>You can look up your reception seating below.";
+        }
+
+
+        // --- Google Sheets Fetch Logic ---
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR8jvxR4NVxruDxDejv9J45ljVpwTRzpH2tphLLRfltgcWQaK43OB4ULyBQXGJNASGWvPy-DbD91Eo6/pub?gid=0&single=true&output=csv';
+        let guestData = [];
+
+        document.getElementById('loading').style.display = 'block';
+
+        fetch(csvUrl)
+            .then(response => response.text())
+            .then(text => {
+                document.getElementById('loading').style.display = 'none';
+                const rows = text.split('\n').slice(1);
+                guestData = rows.map(row => {
+                    const cols = row.split(',');
+                    return {
+                        name: cols[0]?.trim(),
+                        table: cols[1]?.trim(),
+                        seat: cols[2]?.trim()
+                    };
+                }).filter(guest => guest.name);
+            })
+            .catch(error => {
+                document.getElementById('loading').innerText = "Unable to load guest list. Please refresh the page.";
+            });
+
+        function findSeat() {
+            const query = document.getElementById('searchName').value.toLowerCase().trim();
+            const resultDiv = document.getElementById('result');
+            const notFoundDiv = document.getElementById('notFound');
+
+            if (query.length < 3) {
+                resultDiv.style.display = 'none';
+                notFoundDiv.style.display = 'none';
+                return;
+            }
+
+            const match = guestData.find(guest => guest.name.toLowerCase().includes(query));
+
+            if (match) {
+                document.getElementById('guestNameDisplay').innerText = match.name;
+                document.getElementById('tableDisplay').innerText = match.table;
+                document.getElementById('seatDisplay').innerText = match.seat;
+
+                resultDiv.style.display = 'block';
+                notFoundDiv.style.display = 'none';
+            } else {
+                resultDiv.style.display = 'none';
+                notFoundDiv.style.display = 'block';
+            }
+        }
+    </script>
+
+</body>
+
+</html>
