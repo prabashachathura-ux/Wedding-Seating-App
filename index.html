@@ -170,30 +170,53 @@
             font-weight: 400;
         }
 
-        .detail-row {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            margin: 15px 0;
-        }
-
-        .detail-box {
-            text-align: center;
-        }
-
-        .detail-label {
+        .table-header {
             font-family: 'Montserrat', sans-serif;
-            font-size: 10px;
+            font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 2px;
             color: #888;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
         }
 
-        .detail-value {
+        .table-number {
             font-family: 'Playfair Display', serif;
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+        }
+
+        .group-list {
+            text-align: left;
+            margin-top: 15px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+        }
+
+        .group-member {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .group-member:last-child {
+            border-bottom: none;
+        }
+
+        .member-name {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            font-size: 16px;
+            color: var(--primary-text);
+        }
+
+        .member-seat {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-size: 18px;
             color: var(--accent-color);
         }
 
@@ -300,16 +323,13 @@
         <div id="loading" class="loading">Locating guest list...</div>
 
         <div id="result" class="result-card">
-            <h3 id="guestNameDisplay"></h3>
-            <div class="detail-row">
-                <div class="detail-box">
-                    <div class="detail-label">Table</div>
-                    <div class="detail-value" id="tableDisplay"></div>
-                </div>
-                <div class="detail-box">
-                    <div class="detail-label">Seat</div>
-                    <div class="detail-value" id="seatDisplay"></div>
-                </div>
+            <h3 id="partyWelcomeDisplay"></h3>
+
+            <div class="table-header">Table</div>
+            <div class="table-number" id="groupTableDisplay"></div>
+
+            <div id="groupMembersContainer" class="group-list">
+                <!-- Family members will be injected here dynamically -->
             </div>
         </div>
 
@@ -408,18 +428,15 @@
                 return;
             }
 
-            // 2. Find ALL partial matches. 
-            // We no longer auto-show if there is only 1 partial match. They MUST click the suggestion.
+            // 2. Find ALL partial matches
             const partialMatches = guestData.filter(guest => guest.name.toLowerCase().includes(query));
 
             // 3. Build suggestions list
             let validSuggestions = [];
 
             if (partialMatches.length > 0) {
-                // Even if there is just 1 partial match, show it as a suggestion
                 validSuggestions = partialMatches.map(guest => ({ guest: guest, distance: 0 }));
             } else {
-                // No partial matches at all. Use the strict typo logic.
                 const maxAllowedTypos = query.length <= 4 ? 1 : 2;
 
                 guestData.forEach(guest => {
@@ -461,7 +478,6 @@
                     btn.className = 'suggestion-btn';
                     btn.innerText = item.guest.name;
                     btn.onclick = function () {
-                        // Clicking the button fills the input with the exact name, triggering an exact match on the next search
                         document.getElementById('searchName').value = item.guest.name;
                         findSeat();
                     };
@@ -476,14 +492,66 @@
             }
         }
 
-        // Helper function to display the final result
+        // Helper function to display the final result (Group Aware)
+        // Helper function to display the final result (Group & Multi-Table Aware)
         function showMatch(match) {
-            document.getElementById('guestNameDisplay').innerText = match.name;
-            document.getElementById('tableDisplay').innerText = match.table;
-            document.getElementById('seatDisplay').innerText = match.seat;
+            const resultDiv = document.getElementById('result');
+            const notFoundDiv = document.getElementById('notFound');
+            const groupContainer = document.getElementById('groupMembersContainer');
 
-            document.getElementById('result').style.display = 'block';
-            document.getElementById('notFound').style.display = 'none';
+            let partyMembers = [];
+
+            // If this person has a Group ID, find everyone else with the same ID
+            if (match.groupId && match.groupId !== "") {
+                partyMembers = guestData.filter(guest => guest.groupId === match.groupId);
+            } else {
+                // If no Group ID, they are a solo guest
+                partyMembers = [match];
+            }
+
+            // Set the greeting based on solo vs. group
+            if (partyMembers.length > 1) {
+                document.getElementById('partyWelcomeDisplay').innerText = "Your Party";
+            } else {
+                document.getElementById('partyWelcomeDisplay').innerText = match.name;
+            }
+
+            // --- NEW MULTI-TABLE LOGIC ---
+            // Find all unique tables for this specific group
+            const uniqueTables = [...new Set(partyMembers.map(m => m.table))].filter(t => t !== "");
+
+            // Update the big table number at the top (e.g., "5" or "5 & 6")
+            document.getElementById('groupTableDisplay').innerText = uniqueTables.join(' & ');
+
+            // Change the header to plural if there are multiple tables
+            const tableHeader = document.querySelector('.table-header');
+            if (uniqueTables.length > 1) {
+                tableHeader.innerText = "Tables";
+            } else {
+                tableHeader.innerText = "Table";
+            }
+
+            // Clear old list and generate the new family rows
+            groupContainer.innerHTML = '';
+            partyMembers.forEach(member => {
+                const memberRow = document.createElement('div');
+                memberRow.className = 'group-member';
+
+                // If the group is split, explicitly label the table next to the seat
+                const seatDisplay = uniqueTables.length > 1
+                    ? `Table ${member.table}, Seat ${member.seat}`
+                    : `Seat ${member.seat}`;
+
+                memberRow.innerHTML = `
+                <div class="member-name">${member.name}</div>
+                <div class="member-seat">${seatDisplay}</div>
+            `;
+
+                groupContainer.appendChild(memberRow);
+            });
+
+            resultDiv.style.display = 'block';
+            notFoundDiv.style.display = 'none';
         }
     </script>
 
