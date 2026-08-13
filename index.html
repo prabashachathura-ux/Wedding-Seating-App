@@ -10,7 +10,6 @@
     <meta property="og:title" content="Find Your Seat | Chathura & Samadhi">
     <meta property="og:description"
         content="We can't wait to celebrate with you at The Lakeside! Enter your name to find your table and seat number for the reception.">
-    <!-- Elegant wedding reception image for the link preview -->
     <meta property="og:image"
         content="https://images.unsplash.com/photo-1519225421980-715cb02151ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80">
     <meta property="og:type" content="website">
@@ -18,7 +17,7 @@
     <!-- IMPORTANT: Replace this with your actual GitHub Pages URL -->
     <meta property="og:url" content="https://yourusername.github.io/wedding-seating/">
 
-    <!-- Google Fonts matching the classic, elegant vibe of your invitation -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -29,9 +28,7 @@
         :root {
             --primary-text: #2b2b2b;
             --accent-color: #8c734b;
-            /* Muted gold/bronze for elegance */
             --bg-color: #fcfbf9;
-            /* Warm off-white */
             --card-bg: #ffffff;
             --border-color: #eaddcf;
         }
@@ -64,7 +61,6 @@
             position: relative;
         }
 
-        /* Decorative corner accents */
         .container::before,
         .container::after {
             content: '';
@@ -125,7 +121,6 @@
             position: relative;
             margin-bottom: 25px;
             z-index: 2;
-            /* Keeps it above decorative borders */
         }
 
         input {
@@ -134,7 +129,6 @@
             box-sizing: border-box;
             font-family: 'Montserrat', sans-serif;
             font-size: 16px !important;
-            /* Prevents iOS zoom */
             border: 1px solid #ddd;
             border-radius: 2px;
             transition: all 0.3s ease;
@@ -155,7 +149,6 @@
             font-family: 'Playfair Display', serif;
         }
 
-        /* Result Card Styling */
         .result-card {
             padding: 30px 20px;
             margin-top: 20px;
@@ -224,6 +217,46 @@
             animation: fadeIn 0.4s ease;
         }
 
+        /* Suggestions Styling */
+        .suggestions-container {
+            margin-top: 15px;
+            text-align: left;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 15px;
+        }
+
+        .suggestions-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .suggestion-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #faf9f7;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            color: var(--primary-text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .suggestion-btn:hover {
+            background: var(--accent-color);
+            color: #fff;
+            border-color: var(--accent-color);
+        }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -247,14 +280,14 @@
 
         <div class="divider"></div>
 
-        <!-- The text here will be overridden by the script below based on the date -->
         <p class="instructions" id="dynamicWelcome">
             With joyful hearts, we await your presence.<br>
             Please enter your name below to find your seat.
         </p>
 
         <div class="input-group">
-            <input type="text" id="searchName" placeholder="Enter your first or last name..." oninput="findSeat()"
+            <!-- Changed to handleTyping() instead of findSeat() -->
+            <input type="text" id="searchName" placeholder="Enter your first or last name..." oninput="handleTyping()"
                 autocomplete="off">
         </div>
 
@@ -275,7 +308,11 @@
         </div>
 
         <div id="notFound" class="not-found">
-            We couldn't find a perfect match.<br>Try typing just your first name.
+            <div id="notFoundMessage">We couldn't find a perfect match.</div>
+            <div id="suggestionsArea" class="suggestions-container" style="display: none;">
+                <div class="suggestions-title">Did you mean?</div>
+                <div id="suggestionsList"></div>
+            </div>
         </div>
     </div>
 
@@ -284,22 +321,16 @@
         const welcomeElement = document.getElementById('dynamicWelcome');
         const today = new Date();
         const year = today.getFullYear();
-        const month = today.getMonth() + 1; // getMonth is 0-indexed (Jan = 0)
+        const month = today.getMonth() + 1;
         const day = today.getDate();
 
-        // Check if today is exactly the wedding day (August 23, 2026)
         if (year === 2026 && month === 8 && day === 23) {
             welcomeElement.innerHTML = "Welcome to The Lakeside!<br>Please enter your name below to find your seat for the reception.";
-        }
-        // Check if today is BEFORE the wedding
-        else if (year < 2026 || (year === 2026 && month < 8) || (year === 2026 && month === 8 && day < 23)) {
+        } else if (year < 2026 || (year === 2026 && month < 8) || (year === 2026 && month === 8 && day < 23)) {
             welcomeElement.innerHTML = "With joyful hearts, we eagerly await your presence.<br>You can preview your reception seating below.";
-        }
-        // Check if today is AFTER the wedding
-        else {
+        } else {
             welcomeElement.innerHTML = "Thank you for celebrating with us!<br>You can look up your reception seating below.";
         }
-
 
         // --- Google Sheets Fetch Logic ---
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR8jvxR4NVxruDxDejv9J45ljVpwTRzpH2tphLLRfltgcWQaK43OB4ULyBQXGJNASGWvPy-DbD91Eo6/pub?gid=0&single=true&output=csv';
@@ -325,30 +356,133 @@
                 document.getElementById('loading').innerText = "Unable to load guest list. Please refresh the page.";
             });
 
+        // --- Debouncing (Wait to stop typing) ---
+        let typingTimer;
+        const doneTypingInterval = 400;
+
+        function handleTyping() {
+            clearTimeout(typingTimer);
+            const query = document.getElementById('searchName').value.trim();
+
+            if (query.length >= 3) {
+                typingTimer = setTimeout(findSeat, doneTypingInterval);
+            } else {
+                document.getElementById('result').style.display = 'none';
+                document.getElementById('notFound').style.display = 'none';
+            }
+        }
+
+        // --- Fuzzy Matching (Levenshtein Distance) ---
+        function getEditDistance(a, b) {
+            if (a.length == 0) return b.length;
+            if (b.length == 0) return a.length;
+            var matrix = [];
+            for (var i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+            for (var j = 0; j <= a.length; j++) { matrix[0][j] = j; }
+            for (var i = 1; i <= b.length; i++) {
+                for (var j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) == a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
+        }
+
+        // --- Smart Search Logic ---
         function findSeat() {
             const query = document.getElementById('searchName').value.toLowerCase().trim();
             const resultDiv = document.getElementById('result');
             const notFoundDiv = document.getElementById('notFound');
+            const suggestionsArea = document.getElementById('suggestionsArea');
+            const suggestionsList = document.getElementById('suggestionsList');
+            const notFoundMessage = document.getElementById('notFoundMessage');
 
-            if (query.length < 3) {
-                resultDiv.style.display = 'none';
-                notFoundDiv.style.display = 'none';
+            // 1. Check for an EXACT match first
+            const exactMatch = guestData.find(guest => guest.name.toLowerCase() === query);
+
+            if (exactMatch) {
+                showMatch(exactMatch);
                 return;
             }
 
-            const match = guestData.find(guest => guest.name.toLowerCase().includes(query));
+            // 2. Find ALL partial matches (e.g., typing "tes" finds "test1", "test2", "test3")
+            const partialMatches = guestData.filter(guest => guest.name.toLowerCase().includes(query));
 
-            if (match) {
-                document.getElementById('guestNameDisplay').innerText = match.name;
-                document.getElementById('tableDisplay').innerText = match.table;
-                document.getElementById('seatDisplay').innerText = match.seat;
+            if (partialMatches.length === 1) {
+                // Only one person matches this partial string perfectly, so show them
+                showMatch(partialMatches[0]);
+                return;
+            }
 
-                resultDiv.style.display = 'block';
-                notFoundDiv.style.display = 'none';
+            // 3. Build suggestions list
+            let validSuggestions = [];
+
+            if (partialMatches.length > 1) {
+                // Multiple people have these letters. Suggest them all.
+                notFoundMessage.innerText = "Multiple guests found. Please select your name:";
+                validSuggestions = partialMatches.map(guest => ({ guest: guest, distance: 0 }));
+            } else {
+                // No partial matches at all. Use the strict typo logic.
+                notFoundMessage.innerText = "We couldn't find a perfect match.";
+                const maxAllowedTypos = query.length <= 4 ? 1 : 2;
+
+                guestData.forEach(guest => {
+                    const guestNameLower = guest.name.toLowerCase();
+                    const nameParts = guestNameLower.split(' ');
+
+                    let bestDistance = getEditDistance(query, guestNameLower);
+
+                    nameParts.forEach(part => {
+                        const dist = getEditDistance(query, part);
+                        if (dist < bestDistance) bestDistance = dist;
+                    });
+
+                    if (bestDistance <= maxAllowedTypos) {
+                        validSuggestions.push({ guest, distance: bestDistance });
+                    }
+                });
+
+                validSuggestions.sort((a, b) => a.distance - b.distance);
+            }
+
+            // Cap suggestions at 4 to keep the UI clean
+            validSuggestions = validSuggestions.slice(0, 4);
+
+            if (validSuggestions.length > 0) {
+                resultDiv.style.display = 'none';
+                notFoundDiv.style.display = 'block';
+                suggestionsList.innerHTML = '';
+
+                validSuggestions.forEach(item => {
+                    const btn = document.createElement('button');
+                    btn.className = 'suggestion-btn';
+                    btn.innerText = item.guest.name;
+                    btn.onclick = function () {
+                        document.getElementById('searchName').value = item.guest.name;
+                        findSeat();
+                    };
+                    suggestionsList.appendChild(btn);
+                });
+                suggestionsArea.style.display = 'block';
             } else {
                 resultDiv.style.display = 'none';
                 notFoundDiv.style.display = 'block';
+                suggestionsArea.style.display = 'none';
+                notFoundMessage.innerText = "We couldn't find a perfect match. Try typing just your first name.";
             }
+        }
+
+        // Helper function to display the final result
+        function showMatch(match) {
+            document.getElementById('guestNameDisplay').innerText = match.name;
+            document.getElementById('tableDisplay').innerText = match.table;
+            document.getElementById('seatDisplay').innerText = match.seat;
+
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('notFound').style.display = 'none';
         }
     </script>
 
