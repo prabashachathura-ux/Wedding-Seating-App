@@ -14,7 +14,7 @@
         content="https://images.unsplash.com/photo-1519225421980-715cb02151ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80">
     <meta property="og:type" content="website">
 
-    <!-- IMPORTANT: Replace this with your actual GitHub Pages URL -->
+    <!-- IMPORTANT: Replace this with your actual GitHub Pages URL before sharing -->
     <meta property="og:url" content="https://yourusername.github.io/wedding-seating/">
 
     <!-- Google Fonts -->
@@ -217,6 +217,13 @@
             animation: fadeIn 0.4s ease;
         }
 
+        .coordinator-prompt {
+            color: var(--accent-color);
+            font-weight: 500;
+            margin-top: 10px;
+            font-style: normal;
+        }
+
         /* Suggestions Styling */
         .suggestions-container {
             margin-top: 15px;
@@ -286,7 +293,6 @@
         </p>
 
         <div class="input-group">
-            <!-- Changed to handleTyping() instead of findSeat() -->
             <input type="text" id="searchName" placeholder="Enter your first or last name..." oninput="handleTyping()"
                 autocomplete="off">
         </div>
@@ -332,27 +338,21 @@
             welcomeElement.innerHTML = "Thank you for celebrating with us!<br>You can look up your reception seating below.";
         }
 
-        // --- Google Sheets Fetch Logic ---
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR8jvxR4NVxruDxDejv9J45ljVpwTRzpH2tphLLRfltgcWQaK43OB4ULyBQXGJNASGWvPy-DbD91Eo6/pub?gid=0&single=true&output=csv';
+        // --- Google Sheets Fetch Logic (Real-time Apps Script API) ---
+        const apiUrl = 'https://script.google.com/macros/s/AKfycbzzuKAF3Zm3-rr2RuNdbgdcxmsD5BZZkW_2PJe7zduA7nvrgiIRQIIGCOIK1LrOC6eqRQ/exec';
+
         let guestData = [];
 
         document.getElementById('loading').style.display = 'block';
 
-        fetch(csvUrl)
-            .then(response => response.text())
-            .then(text => {
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
                 document.getElementById('loading').style.display = 'none';
-                const rows = text.split('\n').slice(1);
-                guestData = rows.map(row => {
-                    const cols = row.split(',');
-                    return {
-                        name: cols[0]?.trim(),
-                        table: cols[1]?.trim(),
-                        seat: cols[2]?.trim()
-                    };
-                }).filter(guest => guest.name);
+                guestData = data;
             })
             .catch(error => {
+                console.error(error);
                 document.getElementById('loading').innerText = "Unable to load guest list. Please refresh the page.";
             });
 
@@ -400,7 +400,7 @@
             const suggestionsList = document.getElementById('suggestionsList');
             const notFoundMessage = document.getElementById('notFoundMessage');
 
-            // 1. Check for an EXACT match first
+            // 1. Check for an EXACT match with a full name in the spreadsheet
             const exactMatch = guestData.find(guest => guest.name.toLowerCase() === query);
 
             if (exactMatch) {
@@ -408,25 +408,18 @@
                 return;
             }
 
-            // 2. Find ALL partial matches (e.g., typing "tes" finds "test1", "test2", "test3")
+            // 2. Find ALL partial matches. 
+            // We no longer auto-show if there is only 1 partial match. They MUST click the suggestion.
             const partialMatches = guestData.filter(guest => guest.name.toLowerCase().includes(query));
-
-            if (partialMatches.length === 1) {
-                // Only one person matches this partial string perfectly, so show them
-                showMatch(partialMatches[0]);
-                return;
-            }
 
             // 3. Build suggestions list
             let validSuggestions = [];
 
-            if (partialMatches.length > 1) {
-                // Multiple people have these letters. Suggest them all.
-                notFoundMessage.innerText = "Multiple guests found. Please select your name:";
+            if (partialMatches.length > 0) {
+                // Even if there is just 1 partial match, show it as a suggestion
                 validSuggestions = partialMatches.map(guest => ({ guest: guest, distance: 0 }));
             } else {
                 // No partial matches at all. Use the strict typo logic.
-                notFoundMessage.innerText = "We couldn't find a perfect match.";
                 const maxAllowedTypos = query.length <= 4 ? 1 : 2;
 
                 guestData.forEach(guest => {
@@ -456,11 +449,19 @@
                 notFoundDiv.style.display = 'block';
                 suggestionsList.innerHTML = '';
 
+                // Apply the coordinator prompt if there are 2 or more similar names
+                if (validSuggestions.length >= 2) {
+                    notFoundMessage.innerHTML = "Multiple similar names found.<br><div class='coordinator-prompt'>Please check with the coordinators for support.</div>";
+                } else {
+                    notFoundMessage.innerText = "Did you mean this guest?";
+                }
+
                 validSuggestions.forEach(item => {
                     const btn = document.createElement('button');
                     btn.className = 'suggestion-btn';
                     btn.innerText = item.guest.name;
                     btn.onclick = function () {
+                        // Clicking the button fills the input with the exact name, triggering an exact match on the next search
                         document.getElementById('searchName').value = item.guest.name;
                         findSeat();
                     };
@@ -471,7 +472,7 @@
                 resultDiv.style.display = 'none';
                 notFoundDiv.style.display = 'block';
                 suggestionsArea.style.display = 'none';
-                notFoundMessage.innerText = "We couldn't find a perfect match. Try typing just your first name.";
+                notFoundMessage.innerHTML = "We couldn't find a perfect match.<br><div class='coordinator-prompt'>Please check with the coordinators for support.</div>";
             }
         }
 
